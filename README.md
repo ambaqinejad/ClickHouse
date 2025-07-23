@@ -112,4 +112,38 @@ SELECT TIMESTAMP, COUNTRY_CODE, URL, PROJECT
 FROM s3('https://datasets-documentation.s3.eu-west-3.amazonaws.com/pypi/2023/pypi_0_7_34.snappy.parquet');
 
 ```
+
+Write a query using the count() function that returns the top 100 downloaded projects (i.e. the count() of the PROJECT column).
+
+```sql
+select PROJECT, count() as num
+from pypi 
+GROUP BY PROJECT
+ORDER BY num DESC 
+LIMIT 100
+```
+
+Re-run the query from Step 6 above that returned the top 100 downloaded projects, but this time filter the results by only downloads that occurred in April of 2023. (Hint: check the toStartOfMonth() or toDate() functions.)
+
+How many rows were read by ClickHouse to process the previous query? Why was it not the entire dataset?
+
+```sql
+select PROJECT, count() as num
+from pypi 
+WHERE toStartOfMonth(TIMESTAMP) = toDate('2023-04-01')
+GROUP BY PROJECT
+ORDER BY num DESC 
+LIMIT 100
+```
+
+Write a query that only counts downloads of Python projects that start with "boto". (Hint: LIKE allows partial matches.)
+
+```sql
+select PROJECT, count() as num
+from pypi 
+WHERE PROJECT LIKE '%boto%'
+GROUP BY PROJECT
+ORDER BY num DESC 
+```
+
 [clickhouse-driver](https://clickhouse-driver.readthedocs.io/en/latest/installation.html)
