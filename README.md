@@ -142,7 +142,19 @@ from system.parts
 WHERE(active = 1) and (table = 'pypi')
 ```
 
+``` sql
+SELECT
+formatReadableSize(sum(data_compressed_bytes)) as CompressedSize,
+formatReadableSize(sum(data_uncompressed_bytes)) as UnComporessedSize,
+count() as num_of_active_parts
+from system.parts
+WHERE(active = 1) and (table LIKE '%pypi%')
+GROUP BY table
+```
+Notice how much better compression you get from your pypi2 table - the compressed size of the pypi2 table is significantly smaller than pypi!
 
+**See All Solutions**
+[Soultions](https://github.com/ClickHouse/clickhouse-academy/tree/main/developer/02_clickhouse_architecture)
 
 
 
