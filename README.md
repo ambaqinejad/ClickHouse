@@ -60,5 +60,56 @@ GROUP BY crypto_name
 ORDER BY crypto_name ASC
 ```
 
+## Lab 2.1: Understanding the Primary Keys in ClickHouse
+[https://learn.clickhouse.com/learner_module/show/1328854?lesson_id=7790807&section_id=81141679](https://learn.clickhouse.com/learner_module/show/1328854?lesson_id=7790807&section_id=81141679)  
 
+**A granule is a small block of stored data. Choosing the right primary key helps your database engine skip unnecessary granules during queries, which can greatly improve performance.**  
+
+Run the following command, which shows the 16 column names and types that ClickHouse infers from this Parquet file:  
+```sql
+DESCRIBE s3('https://datasets-documentation.s3.eu-west-3.amazonaws.com/pypi/2023/pypi_0_7_34.snappy.parquet');
+
+```
+
+Write a query that returns only the first 10 rows of this file, which will give you an idea of what the dataset looks like.  
+
+```sql
+SELECT * from  
+s3('https://datasets-documentation.s3.eu-west-3.amazonaws.com/pypi/2023/pypi_0_7_34.snappy.parquet') LIMIT 50;
+```
+How many rows are in the file? (You should get 1,692,671.)
+
+```sql
+SELECT count() from
+s3('https://datasets-documentation.s3.eu-west-3.amazonaws.com/pypi/2023/pypi_0_7_34.snappy.parquet') LIMIT 50;
+```
+
+Create a table to store the PyPI data with the following specs: 
+
+a. The table name is pypi
+
+b. The table only has four columns: TIMESTAMP, COUNTRY_CODE, URL, and PROJECT. (If you are unsure of the column types, check the result of the DESCRIBE command above and ignore the Nullable part of it.)
+
+c. The table engine is MergeTree
+
+d. The primary key is the TIMESTAMP column
+
+```sql
+USE training;
+CREATE TABLE pypi
+(
+    TIMESTAMP DateTime64(3, 'UTC'),
+    COUNTRY_CODE Nullable(String),
+    URL Nullable(String),
+    PROJECT Nullable(String)
+)
+ENGINE = MergeTree
+PRIMARY KEY (TIMESTAMP);
+
+
+INSERT INTO pypi
+SELECT TIMESTAMP, COUNTRY_CODE, URL, PROJECT
+FROM s3('https://datasets-documentation.s3.eu-west-3.amazonaws.com/pypi/2023/pypi_0_7_34.snappy.parquet');
+
+```
 [clickhouse-driver](https://clickhouse-driver.readthedocs.io/en/latest/installation.html)
