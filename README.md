@@ -156,6 +156,29 @@ Notice how much better compression you get from your pypi2 table - the compresse
 **See All Solutions**
 [Soultions](https://github.com/ClickHouse/clickhouse-academy/tree/main/developer/02_clickhouse_architecture)
 
+## Modeling Data
+[https://learn.clickhouse.com/learner_module/show/1328860?lesson_id=7951150&section_id=81277855](https://learn.clickhouse.com/learner_module/show/1328860?lesson_id=7951150&section_id=81277855)
+
+### Data Types
+```sql
+Create TABLE Employee (
+    name String,
+    hired Date,
+    age UInt8
+)
+ENGINE = MergeTree
+PRIMARY KEY (name, hired)
+
+Alter Table Employee 
+add Column Meetings Array(DateTime)
+
+Show Create Table Employee
+```
+
+
+
+
+
 
 
 [clickhouse-driver](https://clickhouse-driver.readthedocs.io/en/latest/installation.html)
