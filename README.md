@@ -175,6 +175,22 @@ add Column Meetings Array(DateTime)
 Show Create Table Employee
 ```
 
+```sql
+Insert INTO Employee Values
+(
+    'AmirHosein',
+    '2025-06-16',
+    28,
+    ['2025-07-16 09:00:00']
+)
+(
+    'Ali',
+    '2025-06-16',
+    28,
+    [now(), now() - Interval 1 week]
+)
+```
+
 
 
 
