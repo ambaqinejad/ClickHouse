@@ -113,37 +113,37 @@ FROM s3('https://datasets-documentation.s3.eu-west-3.amazonaws.com/pypi/2023/pyp
 
 ```
 
-Write a query using the count() function that returns the top 100 downloaded projects (i.e. the count() of the PROJECT column).
+
+Let's see what happens when we add PROJECT to the primary key. Create the following table named pypi2, and notice that the only change from pypi is that PROJECT was added to the end of the primary key. Run all of the following commands and see what happens:
 
 ```sql
-select PROJECT, count() as num
-from pypi 
+
+SELECT 
+    PROJECT,
+    count() AS c
+FROM pypi2
+WHERE PROJECT LIKE 'boto%'
 GROUP BY PROJECT
-ORDER BY num DESC 
-LIMIT 100
+ORDER BY c DESC;
 ```
 
-Re-run the query from Step 6 above that returned the top 100 downloaded projects, but this time filter the results by only downloads that occurred in April of 2023. (Hint: check the toStartOfMonth() or toDate() functions.)
+## Lab 2.2: Primary Keys and Disk Storage
+[https://learn.clickhouse.com/learner_module/show/1328854?lesson_id=7790807&section_id=81141679](https://learn.clickhouse.com/learner_module/show/1328854?lesson_id=7790807&section_id=81141679)
 
-How many rows were read by ClickHouse to process the previous query? Why was it not the entire dataset?
+In this lab, you will see how a different primary key can affect the amount of disk space your table uses for storage. Why? Because how your data is sorted can affect how effectively the data can be compressed.
 
+Run the following query, which queries the system.parts table and returns the amount of disk space used by your pypi table:
 ```sql
-select PROJECT, count() as num
-from pypi 
-WHERE toStartOfMonth(TIMESTAMP) = toDate('2023-04-01')
-GROUP BY PROJECT
-ORDER BY num DESC 
-LIMIT 100
+SELECT
+formatReadableSize(sum(data_compressed_bytes)) as CompressedSize,
+formatReadableSize(sum(data_uncompressed_bytes)) as UnComporessedSize,
+count() as num_of_active_parts
+from system.parts
+WHERE(active = 1) and (table = 'pypi')
 ```
 
-Write a query that only counts downloads of Python projects that start with "boto". (Hint: LIKE allows partial matches.)
 
-```sql
-select PROJECT, count() as num
-from pypi 
-WHERE PROJECT LIKE '%boto%'
-GROUP BY PROJECT
-ORDER BY num DESC 
-```
+
+
 
 [clickhouse-driver](https://clickhouse-driver.readthedocs.io/en/latest/installation.html)
