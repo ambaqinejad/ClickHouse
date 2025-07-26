@@ -392,3 +392,10 @@ select avg(price)
 from crypto_prices
 where crypto_name LIKE 'B%'
 ```
+
+### Lab Solution
+[Solitions](https://github.com/ClickHouse/clickhouse-academy/tree/main/developer/03_modeling_data)
+
+## ClickHouse Developer On-demand: Module 4
+### Inserting Data
+[https://learn.clickhouse.com/learner_module/show/1328910?lesson_id=7672008&section_id=74457604](https://learn.clickhouse.com/learner_module/show/1328910?lesson_id=7672008&section_id=74457604)
