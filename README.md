@@ -191,6 +191,12 @@ Insert INTO Employee Values
 )
 ```
 
+**Making a Filed Nullable**
+```sql
+ALTER TABLE Employee Add COLUMN
+my_test Nullable(UInt8)
+```
+
 
 
 
