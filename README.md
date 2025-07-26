@@ -197,10 +197,198 @@ ALTER TABLE Employee Add COLUMN
 my_test Nullable(UInt8)
 ```
 
+**USING ENUMs**
+```sql
+ALTER TABLE Employee Add COLUMN
+shirt_color Enum('Green' = 1, 'Red' = 2, 'White' = 3)
+
+show create table Employee
+
+Insert into Employee values(
+    'Ali', '2005-12-12', 45, [], '', 'Green', 0
+)
+
+select * from Employee
+
+INSERT INTO Employee (shirt_color) Values (3)
+
+select * from Employee
+```
+
+**LowCardinality**
+```sql
+ALTER TABLE Employee add COLUMN 
+position LowCardinality(String)
+
+insert into Employee (position) Values ('Manager')
+
+select * from Employee
+```
+
+### Note:
+```sql
+|    Order By and Primary Key doing the same thing!
+```
+
+![Primary Key can not be less than Order By](./primary%20key%20less%20than%20order%20by.PNG)
+
+### Partitioning
+![Partitioning](./partitioning.PNG)
 
 
 
+## ClickHouse Developer On-demand: Module 3
+[Tutorial Link](https://learn.clickhouse.com/learner_module/show/1328860?lesson_id=7951150&section_id=81277855)
+
+Using the uniqExact function, write a query that returns the unique number of values for the COUNTRY_CODE column. 
+
+```sql
+select uniqExact(COUNTRY_CODE) from pypi
+```
+
+Using uniqExact again, how many unique values appear in the PROJECT column and the URL column?
+
+```sql
+
+```
+
+
+Create a new table named pypi3 that is identical to pypi2 but uses LowCardinality for the COUNTRY_CODE and PROJECT columns. Insert all the rows from pypi2 into pypi3.
+
+```sql
+DESCRIBE pypi2
+
+show create table pypi2
+
+CREATE TABLE training.pypi3
+(
+    `TIMESTAMP` DateTime,
+    `COUNTRY_CODE` LowCardinality(String),
+    `URL` String,
+    `PROJECT` LowCardinality(String)
+)
+PRIMARY KEY (TIMESTAMP, PROJECT)
+
+insert into pypi3 select * from pypi2
+```
+
+Let's see how much disk space we saved:
+
+```sql
+SELECT
+    table,
+    formatReadableSize(sum(data_compressed_bytes)) AS compressed_size,
+    formatReadableSize(sum(data_uncompressed_bytes)) AS uncompressed_size,
+    count() AS num_of_active_parts
+FROM system.parts
+WHERE (active = 1) AND (table LIKE 'pypi%')
+GROUP BY table;
+```
+
+Notice we went from 60.54MiB in pypi to 14.90MiB in pypi2 by sorting the data better, and now down to 13.98MiB in pypi3 by using LowCardinality. More importantly, our queries should run faster when filtering on the LowCardinality columns.
+
+Let's see if the queries are faster. Run the following query on both pypi2 and pypi3. Which result is faster? 
+
+```sql
+SELECT
+    toStartOfMonth(TIMESTAMP) AS month,
+    count() AS count
+FROM pypi2
+WHERE COUNTRY_CODE = 'US'
+GROUP BY
+    month
+ORDER BY
+    month ASC,
+    count DESC;
 
 
 
-[clickhouse-driver](https://clickhouse-driver.readthedocs.io/en/latest/installation.html)
+SELECT
+    toStartOfMonth(TIMESTAMP) AS month,
+    count() AS count
+FROM pypi3
+WHERE COUNTRY_CODE = 'US'
+GROUP BY
+    month
+ORDER BY
+    month ASC,
+    count DESC;
+```
+
+Notice the queries are considerably faster on pypi3 (almost twice as fast)...and this is a small dataset! We could see big improvements in both compression and query performance doing this over billions and billions of rows. 
+
+### Lab 3.2: Defining a MergeTree Table
+
+Run the following command, which shows the data types that ClickHouse infers from the Parquet file:
+
+```sql
+DESCRIBE s3('https://learnclickhouse.s3.us-east-2.amazonaws.com/datasets/crypto_prices.parquet');
+
+```
+
+Define a new table named crypto_prices that satisfies the following requirements:
+
+- a. Use the column names and data types above, except: 
+
+- i. do not use Nullable on any columns
+
+- ii. change trade_date to a Date
+
+- iii. use LowCardinality for the crypto_name
+
+- b. The table engine is MergeTree
+
+- c. The primary key is the crypto_name followed by the trade_date
+
+```sql
+DESCRIBE s3('https://learnclickhouse.s3.us-east-2.amazonaws.com/datasets/crypto_prices.parquet');
+
+
+Create Table crypto_prices (
+    trade_date Date,
+    crypto_name LowCardinality(String),
+    volume Float32,
+    price Float32,
+    maket_cap Float32,
+    change_1_day Float32
+)
+ENGINE = MergeTree
+PRIMARY KEY (crypto_name, trade_date)
+```
+
+Insert all of the data from the parquet file in S3 into your new crypto_prices table.
+
+```sql
+INSERT INTO crypto_prices 
+select * from 
+s3('https://learnclickhouse.s3.us-east-2.amazonaws.com/datasets/crypto_prices.parquet');
+```
+
+Verify you have all the data by counting the number of rows (you should get 2,382,643 rows).
+
+```sql
+select count() from crypto_prices
+```
+
+Run a query that returns the count of rows where volume >= 1000_000. How many rows of the table were read to compute this result?
+
+```sql
+
+```
+
+Using the avg function on the price column, find the average price of 'Bitcoin'. How many granules were processed, and why is it smaller than the previous query that filtered on the volume column?
+
+```sql
+select avg(price), crypto_name 
+from crypto_prices
+where crypto_name = 'Bitcoin'
+GROUP BY crypto_name
+```
+
+What is the average price of all trades where the name of the cryptocurrency name starts with a capital 'B'? You can use the standard LIKE from SQL. Notice how many granules were processed. Clearly the primary index was also useful in this query.
+
+```sql
+select avg(price)
+from crypto_prices
+where crypto_name LIKE 'B%'
+```
