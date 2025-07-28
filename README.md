@@ -517,3 +517,49 @@ SETTINGS format_csv_delimiter = '~'
 
 Run the DESCRIBE command on the table function to view the inferred schema. Notice that both the approved_amount and recommended_amount columns are inferred as Nullable(String), even though most of the values are numeric dollar amounts.
 
+One clever trick you can use is to cast the string column into a numeric value using a function like toUInt32OrZero. If one of the values in a row is not a valid integer, the function will return 0. Write a query that uses toUInt32OrZero to sum up the values of both the approved_amount and recommended_amount columns.
+
+```sql
+SELECT formatReadableQuantity(sum(toUInt32OrZero(approved_amount))),
+formatReadableQuantity(sum(toUInt32OrZero(recommended_amount))) FROM
+s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS format_csv_delimiter = '~'
+```
+
+The issue with the approved_amount and recommended_amount columns is that a handful of rows contain "n/a" instead of a numeric value, so their inferred data type is String. Try running the following query, which uses the schema_inference_hints setting and suggests the data type for these two columns to be UInt32. Does it work? Why? 
+
+```sql
+SELECT 
+    formatReadableQuantity(sum(approved_amount)),
+    formatReadableQuantity(sum(recommended_amount))
+FROM s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS 
+format_csv_delimiter='~',
+schema_inference_hints='approved_amount UInt32, recommended_amount UInt32';
+```
+
+The schema_inference_hints setting can be a great time saver, but for this particular CSV file it is not helping. To really make this work, we need to ingest the data into a MergeTree table with proper data types. Start by creating a new table named operating_budget that satisfies the following requirements:
+
+- a. Uses the MergeTree table engine
+
+- b. Contains the following columns as LowCardinality(String):
+
+-i. fiscal_year, service, department, program, -item_category, and fund
+
+- c. Contains a String column for description
+
+- d. Contains the following columns as UInt32:
+
+-i. approved_amount and recommended_amount
+
+- e. Contains a new program_code column as LowCardinality(String). This data is derived from the program column as explained later.
+
+- f. Contains a Decimal(12,2) column for actual_amount
+
+g . The fund_type is an Enum with three values:
+
+i. GENERAL FUNDS, FEDERAL FUNDS, and OTHER FUNDS
+
+h . The PRIMARY KEY is (fiscal_year, program)
+
+i. Don't forget to set the format_csv_delimiter setting to '~'.
