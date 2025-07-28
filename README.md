@@ -399,3 +399,121 @@ where crypto_name LIKE 'B%'
 ## ClickHouse Developer On-demand: Module 4
 ### Inserting Data
 [https://learn.clickhouse.com/learner_module/show/1328910?lesson_id=7672008&section_id=74457604](https://learn.clickhouse.com/learner_module/show/1328910?lesson_id=7672008&section_id=74457604)
+
+
+### Inserting Local File
+![inserting local file](./insert%20local%20file.PNG)
+
+```
+Note: Pay attention to data sources menu in clickhouse cloud
+```
+
+The data that you are going to insert is in a compressed Parquet file in S3. Use the DESCRIBE command and the s3 table function to view the schema of the data in the following Parquet file:     
+
+https://learn-clickhouse.s3.us-east-2.amazonaws.com/uk_property_prices.snappy.parquet(opens in a new tab)
+
+Use the DESCRIBE command on the s3 table function to view the schema of the data in the Parquet file.
+
+```sql
+DESC s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/uk_property_prices.snappy.parquet')
+```
+
+Create a table that satisfies the following criteria:
+
+- a. The name of the table is uk_price_paid
+
+- b. Use the same column names that are in the Parquet file (the names returned from the DESCRIBE command)
+
+- c. Do not use NULLABLE on any column
+
+- d. The date column should be a Date
+
+- e. Make all of the String columns LowCardinality except addr1 and addr2
+
+- f. The type column is an enumeration that has the values:
+'terraced' = 1, 'semi-detached' = 2, 'detached' = 3, 'flat' = 4, 'other' = 0
+
+- g. The duration column is an enumeration that has the values: 'freehold' = 1, 'leasehold' = 2, 'unknown' = 0
+
+- h. The table engine is MergeTree
+
+- i. The primary key is postcode1, postcode2, date (in that order)
+
+
+Insert all of the rows from the Parquet file into uk_price_paid.
+
+Verify you have all the data by counting the number of rows - you should get 28,634,236.
+
+```sql
+Create table uk_price_paid(
+    price	UInt32,
+    date	Date,
+    postcode1	LowCardinality(String),
+    postcode2	LowCardinality(String),
+    type	Enum('terraced' = 1, 'semi-detached' = 2, 'detached' = 3, 'flat' = 4, 'other' = 0),
+    is_new	UInt8,
+    duration	Enum('freehold' = 1, 'leasehold' = 2, 'unknown' = 0),
+    addr1	String,
+    addr2	String,
+    street	LowCardinality(String),
+    locality	LowCardinality(String),
+    town	LowCardinality(String),
+    district	LowCardinality(String),
+    county	LowCardinality(String)
+)
+ENGINE = MergeTree
+Primary Key(postcode1, postcode2, date)
+
+insert into uk_price_paid
+select * from s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/uk_property_prices.snappy.parquet');
+
+```
+
+Using the avg() function, compute the average price of properties sold where postcode1 equals LU1 and postcode2 equals 5FT. Notice the query only has to read a few thousands of rows (a handful of granules!). Why are so few rows processed?
+
+```sql
+select avg(price) from uk_price_paid
+where postcode1 = 'LU1' and postcode2 = '5FT'
+```
+
+Modify the previous query but only filter on rows where postcode2 equals 5FT. Notice it doesn't scan every row in the table, but it scans a large number (around 19-20M rows). Why did it need to process so many rows?
+
+```sql
+select avg(price) from uk_price_paid
+where postcode2 = '5FT'
+```
+
+Similar to the previous query, find the average price of properties sold in the town of YORK. Notice every row is read to compute the result. Why are so many rows processed?
+
+```sql
+select avg(price) from uk_price_paid
+where town = 'YORK'
+```
+
+### Working with File
+The file is saved with a .csv extension, but notice the delimiter is a ~ character instead of a comma. Write a query that counts the number of rows in this file, which is found at https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv.
+
+```sql
+SELECT count() FROM
+s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS format_csv_delimiter = '~'
+```
+
+Run a query that sums up the actual_amount column, which would represent how much money was actually spent for the year. You should get back about $8.16 billion dollars.
+
+```sql
+SELECT formatReadableQuantity(sum(actual_amount)) FROM
+s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS format_csv_delimiter = '~'
+```
+
+Try to run a query that sums up the approved_amount column, which would represent how much money was actually spent for the year. What is the issue?
+
+```sql
+SELECT formatReadableQuantity(sum(approved_amount)) FROM
+s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS format_csv_delimiter = '~'
+```
+
+Run the DESCRIBE command on the table function to view the inferred schema. Notice that both the approved_amount and recommended_amount columns are inferred as Nullable(String), even though most of the values are numeric dollar amounts.
+
