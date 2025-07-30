@@ -659,4 +659,4 @@ where fiscal_year='2022' and program_code='031'
  [Laboratory Link](https://learn.clickhouse.com/learner_module/show/1328915?lesson_id=7481737&section_id=81192209)
 
  To read the document go to:  
- [Analyzing Data](ClickHouse\AnalyzingData.md)
+ [Analyzing Data](AnalyzingData.md)
