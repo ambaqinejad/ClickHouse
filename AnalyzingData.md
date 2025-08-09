@@ -196,3 +196,22 @@ WHERE
 GROUP BY day 
 ORDER by day asc
 ```
+
+Write a query that returns the price of the most expensive property in each town divided by the price of the most expensive property in the entire dataset. Sort the results in descending order of the computed result.
+
+```sql
+WITH (
+    SELECT max(price)
+    from uk_price_paid
+) as overall_max
+SELECT max(price) / overall_max, town
+FROM uk_price_paid
+GROUP BY town
+ORDER BY 1 DESC
+```
+
+Lab Solutions
+
+The lab solutions are available in GitHub. Click the button to view them.
+
+https://github.com/ClickHouse/clickhouse-academy/tree/main/developer/05_analyzing_data

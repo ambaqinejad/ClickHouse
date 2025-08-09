@@ -660,3 +660,9 @@ where fiscal_year='2022' and program_code='031'
 
  To read the document go to:  
  [Analyzing Data](AnalyzingData.md)
+
+ ## Materialized Views
+ [Laboratory Link](https://learn.clickhouse.com/learner_module/show/1328927?lesson_id=7671000&section_id=67044210)
+
+ To read the document go to:  
+ [Materialized Views](MaterializedViews.md)
