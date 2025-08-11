@@ -666,3 +666,9 @@ where fiscal_year='2022' and program_code='031'
 
  To read the document go to:  
  [Materialized Views](MaterializedViews.md)
+
+  ## Aggregation Materialized Views
+ [Laboratory Link](https://learn.clickhouse.com/learner_module/show/1328942?lesson_id=7481962&section_id=74457621)
+
+ To read the document go to:  
+ [Aggregation Materialized Views](AggregationMaterializedViews.md)
