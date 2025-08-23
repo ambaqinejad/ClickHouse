@@ -6,3 +6,10 @@ ENGINE = MergeTree ORDER BY tuple();"}'
 ```
 
 ![allow null](./allow null type inferring.png)
+
+### Better Solution
+```sql
+CREATE TABLE satellite.OBC_1 ENGINE = File(CSVWithNames)
+AS SELECT * FROM file('OBC_1.csv', CSVWithNames)"
+
+```
