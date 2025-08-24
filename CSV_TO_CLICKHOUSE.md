@@ -109,3 +109,11 @@ SELECT *,
 FROM satellite.obc;
 ------------------------------------
 ```
+
+### Check if OBC_Date or OBC_Time is NaT and NaN
+```sql
+SELECT * FROM "satellite"."OBC" 
+where OBC_Date == 'NaT'
+
+
+```
