@@ -1,8 +1,13 @@
 ```sql
 clickhouse-local --query
 "DESC file('OBC_1.csv', 'CSVWithNames')" |
-awk 'BEGIN {print "CREATE TABLE my_table ("} {print "    `" $1 "` " $2 ","} END {print ")
+awk 'BEGIN {print "CREATE TABLE satellite.OBC ("} {print "    `" $1 "` " $2 ","} END {print ")
 ENGINE = MergeTree ORDER BY tuple();"}'
+
+
+INSERT INTO satellite.OBC_1
+SELECT *
+FROM file('OBC_1.csv', CSVWithNames);
 ```
 
 ![allow null](./allow null type inferring.png)
