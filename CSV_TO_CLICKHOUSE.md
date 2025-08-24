@@ -13,3 +13,25 @@ CREATE TABLE satellite.OBC_1 ENGINE = File(CSVWithNames)
 AS SELECT * FROM file('OBC_1.csv', CSVWithNames)"
 
 ```
+
+### Transform
+```sql
+CREATE TABLE satellite.t_obc
+ENGINE = MergeTree
+ORDER BY tuple() AS
+SELECT * REPLACE(
+    parseDateTimeBestEffort(concat(OBC_Date, ' ', OBC_Time)) AS ts1
+)
+FROM satellite.obc;
+```
+
+```sql
+CREATE TABLE satellite.t_obc1
+ENGINE = MergeTree
+ORDER BY tuple() AS
+SELECT
+    *,
+    parseDateTimeBestEffort(concat(OBC_Date, ' ', OBC_Time)) AS ts1
+FROM satellite.obc;
+
+```
