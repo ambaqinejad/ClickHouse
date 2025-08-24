@@ -1,6 +1,6 @@
 ```sql
 clickhouse-local --query
-"DESC file('OBC_1.csv', 'CSVWithNames')" |
+"DESC file('OBC1.csv', 'CSVWithNames')" |
 awk 'BEGIN {print "CREATE TABLE satellite.OBC ("} {print "    `" $1 "` " $2 ","} END {print ")
 ENGINE = MergeTree ORDER BY tuple();"}'
 
