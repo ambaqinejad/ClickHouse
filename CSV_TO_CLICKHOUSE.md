@@ -35,3 +35,16 @@ SELECT
 FROM satellite.obc;
 
 ```
+
+
+### Creating Function to Transform separated Date and Time to One Column
+```sql
+CREATE OR REPLACE FUNCTION createDateTime AS (d, t) ->
+    parseDateTimeBestEffortUS(
+        formatDateTime(parseDateTimeBestEffortUS(nullIf(d, '')), '%Y-%m-%d') || ' ' || t
+    );
+
+SELECT createDateTime(OBC_Date, OBC_Time) AS ts1
+FROM satellite.obc
+LIMIT 20;
+```
