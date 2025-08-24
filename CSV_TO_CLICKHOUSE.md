@@ -48,3 +48,34 @@ SELECT createDateTime(OBC_Date, OBC_Time) AS ts1
 FROM satellite.obc
 LIMIT 20;
 ```
+
+### Solving the problem of NAT and NAN in Date and Time
+```sql
+CREATE OR REPLACE FUNCTION createDateTime AS (d, t) ->
+    parseDateTimeBestEffortOrNull(
+        concat(
+            nullIf(d, 'NaT'),   -- turns 'NaT' into NULL
+            ' ',
+            nullIf(t, 'NaN')    -- turns 'NaN' into NULL
+        )
+    );
+
+
+SELECT *,
+       createDateTime(OBC_Date, OBC_Time) AS ts1
+FROM satellite.obc;
+```
+
+### Create a new table with ts as primary key
+```sql
+CREATE TABLE satellite.obc_with_ts
+ENGINE = MergeTree()
+PRIMARY KEY ts1
+ORDER BY ts1
+SETTINGS allow_nullable_key = 1
+AS
+SELECT *,
+       createDateTime(OBC_Date, OBC_Time) AS ts1
+FROM satellite.obc;
+
+```
