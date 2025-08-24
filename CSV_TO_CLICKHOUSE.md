@@ -79,3 +79,28 @@ SELECT *,
 FROM satellite.obc;
 
 ```
+
+### Follow Insert, Update, Delete from source table
+```sql
+CREATE TABLE satellite.obc_with_ts_crud
+ENGINE = ReplacingMergeTree(version)
+PRIMARY KEY ts1
+ORDER BY ts1
+SETTINGS allow_nullable_key = 1
+AS
+SELECT *,
+       createDateTime(OBC_Date, OBC_Time) AS ts1,
+       1 AS version,
+       0 AS is_deleted
+FROM satellite.obc;
+-----------------------------------
+CREATE MATERIALIZED VIEW satellite.mv_obc_with_ts_crud
+TO satellite.obc_with_ts_crud
+AS
+SELECT *,
+       createDateTime(OBC_Date, OBC_Time) AS ts1,
+       1 AS version,
+       0 AS is_deleted
+FROM satellite.obc;
+------------------------------------
+```
